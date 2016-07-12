@@ -25,6 +25,7 @@ public class MainActivity extends Activity {
     String appFolderPath;
     String systemPath;
     String outputPath = appFolderPath+"predict ";
+    String modelPath;
     // link jni library
     static {
         System.loadLibrary("jnilibsvm");
@@ -50,8 +51,8 @@ public class MainActivity extends Activity {
         // 2. assign model/output paths
         String dataTrainPath = appFolderPath+"heart_scale ";
         String dataPredictPath = appFolderPath+"heart_scale ";
-        String modelPath = appFolderPath+"model ";
-        String outputPath = appFolderPath+"predict ";
+        modelPath = appFolderPath+"model ";
+        outputPath = appFolderPath+"predict ";
 
         // 3. make SVM train
         String svmTrainOptions = "-t 2 ";
@@ -65,7 +66,7 @@ public class MainActivity extends Activity {
 
         Log.v("value from scaleC", Double.toString(scaleCalculation(1.208178869830869)));
 
-        getZone(scaleCalculation(1.208178869830869));
+        getZone(scaleCalculation(7.738161225497862));
 
 
 
@@ -91,10 +92,17 @@ public class MainActivity extends Activity {
     }
 
 
+    /***
+     *
+     * @param distance the calculated distance from {@link #scaleCalculation(double)}
+     * @return zoom number from 1 to 3
+     */
+
     private int getZone(double distance) {
 
         //File root = Environment.getExternalStorageDirectory();
         File outputFile;
+        int zoomNumber = 0;
 
         String fileName="test";
 
@@ -140,30 +148,55 @@ public class MainActivity extends Activity {
 
             Log.i("readfile output", textRead.toString());
 
+            String dataPredictPath = appFolderPath + "test";
+            String modelPath = appFolderPath + "data_model";
+            String outputPath = appFolderPath + "predict";
+
+            jniSvmPredict(String.format("%s %s %s", dataPredictPath, modelPath, outputPath));
+
+            zoomNumber = getrange(outputPath);
+
 
         } catch (IOException e) {
             Log.w("eztt", e.getMessage(), e);
             Log.v(LOG_TAG, " Unable to write to external storage.");
         }
 
-
-
-
-
-
-
-
-
         //jniSvmPredict(String.format("%s %s %s", appFolderPath, out, outputPath));
-        return 1;
+        return zoomNumber;
     }
 
-    //caluelate the scale value
+
+    //return the zoom number
+    private int getrange(String outputFile){
+        int range = 0;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(outputFile));
+            String line;
+            if ((line = br.readLine()) != null) {
+                range = Integer.parseInt(line);
+            }
+            br.close();
+        }
+        catch (IOException e) {
+            //You'll need to add proper error handling here
+        }
+
+        Log.i("range output", Integer.toString(range));
+        return range;
+    }
+
+
+    /***
+     * get the scale value
+     * @param distance getting from Estimo sdk
+     * @return
+     */
 
     private double scaleCalculation(double distance){
 
         //return y_lower + (y_upper - y_lower) * (value - y_min)/(y_max-y_min);
-        return 0 + (1 - 0) * (distance - 0) / (7.738161225497862 - 0.507436303138359);
+        return 0 + (1 - 0) * (distance - 0.507436303138359) / (7.738161225497862 - 0.507436303138359);
     }
 
 
@@ -185,7 +218,7 @@ public class MainActivity extends Activity {
     }
 
     private void copyAssetsDataIfNeed(){
-        String assetsToCopy[] = {"heart_scale_predict","heart_scale_train","heart_scale"};
+        String assetsToCopy[] = {"heart_scale_predict","heart_scale_train","heart_scale","data_model"};
         //String targetPath[] = {C.systemPath+C.INPUT_FOLDER+C.INPUT_PREFIX+AudioConfigManager.inputConfigTrain+".wav", C.systemPath+C.INPUT_FOLDER+C.INPUT_PREFIX+AudioConfigManager.inputConfigPredict+".wav",C.systemPath+C.INPUT_FOLDER+"SomeoneLikeYouShort.mp3"};
 
         for(int i=0; i<assetsToCopy.length; i++){
